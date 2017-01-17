@@ -476,7 +476,7 @@ struct tune_sdly {
 	u32 tm4_sm4_f3210;
 	u32 tm4_sm4_f7654;
 */
-	u32 tm4_smx_fx[10];
+	u32 tm4_smx_fx[12];
 };
 
 struct boot_mmc_cfg {
@@ -499,6 +499,15 @@ struct boot_sdmmc_private_info_t {
 	#define CARD_TYPE_MMC 0x8000000
 	#define CARD_TYPE_NULL 0xffffffff
 	u32 card_type;  /*0xffffffff: invalid; 0x8000000: mmc card; 0x8000001: sd card*/
+
+	#define EXT_PARA0_ID                  (0x55000000)
+	#define EXT_PARA0_TUNING_SUCCESS_FLAG (1U<<0)
+	u32 ext_para0;
+
+	/* ext_para1/2/3 reseved for future */
+	u32 ext_para1;
+	u32 ext_para2;
+	u32 ext_para3;
 };
 
 #endif
@@ -564,6 +573,8 @@ struct mmc_platform_caps {
 	u32 host_caps_mask;
 
 	struct tune_sdly sdly;
+
+	u32 force_boot_tuning;
 };
 
 struct mmc_config {
@@ -645,6 +656,7 @@ struct mmc {
 	u32 pll_clock;
 	u32 msglevel;
 	u32 do_tuning;
+	u32 tuning_end;
 };
 
 struct mmc_ext_csd {

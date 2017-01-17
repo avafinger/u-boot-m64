@@ -421,12 +421,14 @@ int update_fdt_para_for_kernel(void* dtb_base)
 				return -1;
 			}
 		}
+#if 0		
 		ret = fdt_set_node_status(dtb_base,nodeoffset_emmc,FDT_STATUS_DISABLED,0);
 		if(ret < 0)
 		{
 			printf("diable emmc error: %s\n", fdt_strerror(ret));
 			return -1;
 		}
+#endif		
 	}
 
 	//fix dram para

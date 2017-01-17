@@ -105,7 +105,7 @@ u32 freq_hs400[8] = {
 
 u32 freq_range_ds26_sdr12[2]    = {400*1000, 26*1000*1000};
 u32 freq_range_hssdr52_sdr25[2] = {50*1000*1000, 52*1000*1000};
-u32 freq_range_hsddr52_ddr50[2] = {50*1000*1000, 52*1000*1000};
+u32 freq_range_hsddr52_ddr50[2] = {25*1000*1000, 52*1000*1000};
 u32 freq_range_hs200_sdr104[2]  = {50*1000*1000, 200*1000*1000};
 u32 freq_range_hs400[2]         = {50*1000*1000, 150*1000*1000};
 
@@ -1042,7 +1042,7 @@ int sunxi_bus_tuning(struct mmc *mmc)
 
 #if 1
 	if (((mmc->cfg->host_caps & (MMC_MODE_HS400|MMC_MODE_8BIT)) == (MMC_MODE_HS400|MMC_MODE_8BIT))
-		&& !(err_flag & 0x1))
+		&& !(err_flag & 0x3))
 	{
 		MMCINFO("================== start tuning HS400...\n");
 		ret = sunxi_execute_tuning(mmc, HS400);
@@ -1085,11 +1085,21 @@ int sunxi_switch_to_best_bus(struct mmc *mmc)
 	int work_mode = uboot_spare_head.boot_data.work_mode;
 	char caps_bak = 0;
 	ALLOC_CACHE_ALIGN_BUFFER(char, ext_csd, MMC_MAX_BLOCK_LEN);
+	u32 tm = host->timing_mode;
+	// u8 *p = NULL, *pds=NULL;
 
+	MMCINFO("BPI: %s - host->mmc_no: %d \n", __FUNCTION__, host->mmc_no);
 	if (IS_SD(mmc) || ((host->mmc_no == 3) || (host->mmc_no == 0)))
 	{
 		return 0;
 	}
+#ifdef BPI
+#else
+	if (host->mmc_no == 2) {
+		MMCINFO("BPI: %s SKIP\n", __FUNCTION__);
+		return 0;
+	}
+#endif
 	if ((work_mode == WORK_MODE_BOOT)
 		|| ((work_mode != WORK_MODE_BOOT)
 			&& (host->cfg.platform_caps.sample_mode != AUTO_SAMPLE_MODE)))
@@ -1133,6 +1143,17 @@ int sunxi_switch_to_best_bus(struct mmc *mmc)
 
 	MMCDBG("card caps 0x%x\n", mmc->card_caps);
 
+	/*if (tm == SUNXI_MMC_TIMING_MODE_2) {
+		p = &host->tm2.sdly[0];
+		pds = &host->tm2.dsdly[0];
+	} else  if (tm == SUNXI_MMC_TIMING_MODE_4) {
+		p = &host->tm4.sdly[0];
+		pds = &host->tm4.dsdly[0];
+	} else { */
+	if (tm != SUNXI_MMC_TIMING_MODE_2 && tm != SUNXI_MMC_TIMING_MODE_4) {
+		MMCINFO("%s: err timing mode %d\n", __FUNCTION__, tm);
+		goto OUT;
+	}
 
 	if ((mmc->card_caps & (MMC_MODE_HS400|MMC_MODE_8BIT))
 		== (MMC_MODE_HS400|MMC_MODE_8BIT))

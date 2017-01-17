@@ -26,10 +26,13 @@
 	    it also support to use delay chain on data strobe signal.
 */
 #define SUNXI_MMC_TIMING_MODE_1 1U
+#define SUNXI_MMC_TIMING_MODE_2 2U
 #define SUNXI_MMC_TIMING_MODE_3 3U
 #define SUNXI_MMC_TIMING_MODE_4 4U
 
 #define MMC_CLK_SAMPLE_POINIT_MODE_1 3U
+#define MMC_CLK_SAMPLE_POINIT_MODE_2 2U
+#define MMC_CLK_SAMPLE_POINIT_MODE_2_HS400 64U
 #define MMC_CLK_SAMPLE_POINIT_MODE_3 64U
 #define MMC_CLK_SAMPLE_POINIT_MODE_4 64U
 
@@ -45,6 +48,8 @@
 #define TM4_OUT_PH90   (0)
 #define TM4_OUT_PH180  (1)
 
+/* error number defination */
+#define ERR_NO_BEST_DLY (2)
 
 /* smhc0&1 */
 struct sunxi_mmc_timing_mode1 {

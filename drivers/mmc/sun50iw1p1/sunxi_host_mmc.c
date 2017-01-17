@@ -1020,9 +1020,18 @@ int mmc_clk_io_onoff(int sdc_no, int onoff, int reset_clk)
 		rval = readl(mmchost->hclkbase);
 		rval |= (1 << (8 + sdc_no));
 		writel(rval, mmchost->hclkbase);
+
+		rval = readl(mmchost->mclkbase);
+		rval |= (1U<<31);
+		writel(rval, mmchost->mclkbase);
 	}
 	else
 	{
+
+		rval = readl(mmchost->mclkbase);
+		rval &= ~(1U<<31);
+		writel(rval, mmchost->mclkbase);
+
 		rval = readl(mmchost->hclkbase);
 		rval &= ~(1 << (8 + sdc_no));
 		writel(rval, mmchost->hclkbase);
@@ -1035,7 +1044,11 @@ int mmc_clk_io_onoff(int sdc_no, int onoff, int reset_clk)
 	/* config mod clock */
 	if (reset_clk)
 	{
-		writel(0x80000000, mmchost->mclkbase);
+        // writel(0x80000000, mmchost->mclkbase);
+		rval = readl(mmchost->mclkbase);
+		/*set to 24M default value*/
+		rval &= ~(0x7fffffff);
+		writel(rval, mmchost->mclkbase);
 		mmchost->mod_clk = 24000000;
 	}
 

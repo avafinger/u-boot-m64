@@ -2119,7 +2119,7 @@ struct mmc *mmc_create(const struct mmc_config *cfg, void *priv)
 	INIT_LIST_HEAD(&mmc->link);
 
 	list_add_tail(&mmc->link, &mmc_devices);
-
+	cur_dev_num++;
 	return mmc;
 }
 
@@ -2182,6 +2182,24 @@ int mmc_start_init(struct mmc *mmc)
 
 	/* The internal partition reset to user partition(0) at every CMD0*/
 	mmc->part_num = 0;
+
+	if ( (uboot_spare_head.boot_data.storage_type == STORAGE_EMMC) &&
+		(0 ==mmc->block_dev.dev)){
+		priv_info->card_type = CARD_TYPE_NULL;
+	}
+#ifdef BPI
+#else
+	if(mmc->cfg->host_no==0) {
+		priv_info->card_type = CARD_TYPE_SD;
+		MMCINFO("BPI: %d CARD_TYPE_SD\n", mmc->cfg->host_no);
+	}
+	else
+	if(mmc->cfg->host_no==2) {
+		priv_info->card_type = CARD_TYPE_MMC;
+		MMCINFO("BPI: %d CARD_TYPE_MMC\n", mmc->cfg->host_no);
+	}
+
+#endif
 
 	if (work_mode == WORK_MODE_BOOT)
 	{
@@ -2292,12 +2310,13 @@ static int mmc_complete_init(struct mmc *mmc)
 	}
 	mmc->init_in_progress = 0;
 
+#ifdef _A64_SWITCH_
 	err = sunxi_switch_to_best_bus(mmc);
 	if (err) {
 		MMCINFO("switch to best speed mode fail\n");
 		return err;
 	}
-
+#endif
 	init_part(&mmc->block_dev); /* it will send cmd17 */
 	return err;
 }
@@ -2755,6 +2774,9 @@ int mmc_init_boot(struct mmc *mmc)
 {
 	int err = 0;
 	int work_mode = uboot_spare_head.boot_data.work_mode;
+	struct boot_sdmmc_private_info_t *priv_info =
+		(struct boot_sdmmc_private_info_t *)(uboot_spare_head.boot_data.sdcard_spare_data);
+	int need_tuning = 0;
 
 	MMCDBG("=============== start mmc_init_boot@lex...\n");
 
@@ -2765,6 +2787,65 @@ int mmc_init_boot(struct mmc *mmc)
 
 	if (!err || err == IN_PROGRESS)
 		err = mmc_complete_init(mmc);
+
+	if ((work_mode == WORK_MODE_BOOT)
+		&& (mmc->cfg->platform_caps.sample_mode == AUTO_SAMPLE_MODE))
+	{
+		if (mmc->cfg->platform_caps.force_boot_tuning)
+			need_tuning = 1;
+		else
+		{
+			if (((priv_info->ext_para0 & 0xFF000000) == EXT_PARA0_ID)
+				&& (priv_info->ext_para0 & EXT_PARA0_TUNING_SUCCESS_FLAG))
+				MMCINFO("%s: tuning procedure is executed!\n", __FUNCTION__);
+			else
+				need_tuning = 1;
+		}
+#ifdef BPI
+#else
+		if (need_tuning)
+		{
+			need_tuning = 0;
+			MMCINFO("BPI: %s SKIP tuning procedure!\n", __FUNCTION__);
+		}
+#endif
+
+		if (need_tuning)
+		{
+			MMCINFO("%s: start tuning ...\n", __FUNCTION__);
+
+			mmc->msglevel = 0x0;
+			mmc->do_tuning = 0x1;
+			mmc->tuning_end = 0x0;
+			err = sunxi_mmc_tuning_init();
+			if (err) {
+				MMCINFO("%s: init tuning failed\n", __FUNCTION__);
+				return err;
+			}
+
+			err = sunxi_write_tuning(mmc);
+			if (err) {
+				MMCINFO("%s: write pattern failed\n", __FUNCTION__);
+				return err;
+			}
+
+			err = sunxi_bus_tuning(mmc);
+			if (err) {
+				MMCINFO("%s: bus tuning fail, err %d\n", __FUNCTION__, err);
+				return err;
+			}
+
+			mmc->msglevel = 0x1;
+			mmc->do_tuning = 0x0;
+			mmc->tuning_end = 0x1;
+		}
+	}
+
+	err = sunxi_switch_to_best_bus(mmc);
+	if (err) {
+		MMCINFO("%s: switch to best speed mode fail\n", __FUNCTION__);
+		return err;
+	}
 
 	if((work_mode == WORK_MODE_BOOT)
 		&& (mmc->cfg->platform_caps.sample_mode == AUTO_SAMPLE_MODE) )
@@ -2807,6 +2888,7 @@ int mmc_init_product(struct mmc *mmc)
 
 	mmc->msglevel = 0x0;
 	mmc->do_tuning = 0x1;
+	mmc->tuning_end = 0x0;
 
 retry:
 	MMCDBG("=============== start mmc_init_product...\n");
@@ -2898,6 +2980,7 @@ retry:
 
 	mmc->msglevel = 0x1;
 	mmc->do_tuning = 0x0;
+	mmc->tuning_end = 0x1; //comment this line for debug, test tuning during boot.
 
 	err = sunxi_mmc_tuning_exit();
 	if (err) {
