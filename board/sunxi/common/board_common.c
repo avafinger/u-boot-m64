@@ -517,6 +517,28 @@ int get_debugmode_flag(void)
 	return 0;
 }
 
+static void sunxi_set_boot_disk(void)
+{
+    switch(get_boot_storage_type())
+    {
+      case STORAGE_SD:
+        setenv("boot_disk", "0");
+        setenv("boot_part", "0:1");
+        setenv("mmc_disk", "0");
+        break;
+
+      case STORAGE_EMMC:
+        setenv("boot_disk", "2");
+        setenv("boot_part", "2:1");
+        setenv("mmc_disk", "1");
+        break;
+
+      default:
+        printf("storage not supported\n");
+        break;
+    }
+}
+
 
 int board_late_init(void)
 {
@@ -524,6 +546,7 @@ int board_late_init(void)
 	if(get_boot_work_mode() == WORK_MODE_BOOT)
 	{
 		sunxi_fastboot_init();
+        sunxi_set_boot_disk();
 		update_bootcmd();
 		ret = update_fdt_para_for_kernel(working_fdt);
 #ifdef CONFIG_SUNXI_SERIAL

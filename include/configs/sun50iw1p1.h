@@ -339,35 +339,38 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"mmcboot=run load_dtb load_kernel load_initrd set_cmdline boot_kernel\0" \
-	"console=ttyS0,115200\0" \
-	"root=/dev/mmcblk1p2\0" \
-	"load_addr=41000000\0" \
+	"console=ttyS0,115200\0"                                           \
+    "mmc_disk=0\0"                                                     \
+	"root=/dev/mmcblk0p2\0"                                  \
+    "boot_disk=0\0"                                                    \
+ 	"boot_part=0:1\0"                                                  \
+	"load_addr=41000000\0"                                             \
 	"fdt_addr=45000000\0" \
 	"kernel_addr=41080000\0" \
 	"initrd_addr=45300000\0" \
-	"kernel_filename=pine64/Image\0" \
-	"fdt_filename_prefix=pine64/sun50i-a64-\0" \
+	"kernel_filename=a64/Image\0" \
+	"fdt_filename_prefix=a64/a64-\0" \
 	"fdt_filename_suffix=.dtb\0" \
 	"initrd_filename=initrd.img\0" \
 	"bootenv_filename=uEnv.txt\0" \
 	"load_bootenv=" \
-		"fatload mmc 0:1 ${load_addr} ${bootenv_filename}\0" \
+		"fatload mmc ${boot_part} ${load_addr} ${bootenv_filename}\0"  \
 	"import_bootenv=" \
 		"env import -t ${load_addr} ${filesize}\0" \
 	"load_dtb=" \
 		"if test ${fdt_filename} = \"\"; then " \
-			"setenv fdt_filename ${fdt_filename_prefix}${pine64_model}${fdt_filename_suffix}; " \
+			"setenv fdt_filename ${fdt_filename_prefix}${a64_model}${fdt_filename_suffix}; " \
 		"fi; " \
-		"fatload mmc 0:1 ${fdt_addr} ${fdt_filename}; " \
+		"fatload mmc ${boot_part} ${fdt_addr} ${fdt_filename}; " \
 		"fdt addr ${fdt_addr}; fdt resize\0" \
 	"load_kernel=" \
-		"fatload mmc 0:1 ${kernel_addr} ${kernel_filename}\0" \
+		"fatload mmc ${boot_part} ${kernel_addr} ${kernel_filename}\0" \
 	"boot_kernel=booti ${kernel_addr} ${initrd_addr}:${initrd_size} ${fdt_addr}\0" \
 	"load_initrd=" \
-		"fatload mmc 0:1 ${initrd_addr} ${initrd_filename}; "\
+		"fatload mmc ${boot_part} ${initrd_addr} ${initrd_filename}; "\
 		"setenv initrd_size ${filesize}\0" \
 	"load_bootscript=" \
-		"fatload mmc 0:1 ${load_addr} ${script}\0" \
+		"fatload mmc ${boot_part} ${load_addr} ${script}\0" \
 	"scriptboot=source ${load_addr}\0" \
 	"set_cmdline=" \
 		"setenv bootargs console=${console} ${optargs} " \
@@ -384,61 +387,11 @@
 			"run scriptboot; " \
 		"else " \
 			"echo Booting with defaults ...; " \
-			"run mmcboot; " \
-		"fi\0"
-
-#define CONFIG_EXTRA_ENV_SETTINGS_XX \
-	"script=boot.scr\0" \
-	"mmcboot=run load_dtb load_kernel load_initrd set_cmdline boot_kernel\0" \
-	"console=ttyS0,115200\0" \
-	"root=/dev/mmcblk1p2\0" \
-	"load_addr=41000000\0" \
-	"fdt_addr=45000000\0" \
-	"kernel_addr=41080000\0" \
-	"initrd_addr=45300000\0" \
-	"kernel_filename=pine64/Image\0" \
-	"fdt_filename_prefix=pine64/sun50i-a64-\0" \
-	"fdt_filename_suffix=.dtb\0" \
-	"initrd_filename=initrd.img\0" \
-	"bootenv_filename=uEnv.txt\0" \
-	"load_bootenv=" \
-		"fatload mmc 2:1 ${load_addr} ${bootenv_filename}\0" \
-	"import_bootenv=" \
-		"env import -t ${load_addr} ${filesize}\0" \
-	"load_dtb=" \
-		"if test ${fdt_filename} = \"\"; then " \
-			"setenv fdt_filename ${fdt_filename_prefix}${pine64_model}${fdt_filename_suffix}; " \
-		"fi; " \
-		"fatload mmc 2:1 ${fdt_addr} ${fdt_filename}; " \
-		"fdt addr ${fdt_addr}; fdt resize\0" \
-	"load_kernel=" \
-		"fatload mmc 2:1 ${kernel_addr} ${kernel_filename}\0" \
-	"boot_kernel=booti ${kernel_addr} ${initrd_addr}:${initrd_size} ${fdt_addr}\0" \
-	"load_initrd=" \
-		"fatload mmc 2:1 ${initrd_addr} ${initrd_filename}; "\
-		"setenv initrd_size ${filesize}\0" \
-	"load_bootscript=" \
-		"fatload mmc 2:1 ${load_addr} ${script}\0" \
-	"scriptboot=source ${load_addr}\0" \
-	"set_cmdline=" \
-		"setenv bootargs console=${console} ${optargs} " \
-		"earlycon=uart,mmio32,0x01c28000 mac_addr=${ethaddr} " \
-		"root=${root} ro " \
-		"rootwait\0" \
-	"mmcbootcmd=" \
-		"if run load_bootenv; then " \
-			"echo Loading boot environment ...; " \
-			"run import_bootenv; " \
-		"fi; " \
-		"if run load_bootscript; then " \
-			"echo Booting with script ...; " \
-			"run scriptboot; " \
-		"else " \
-			"echo Booting with defaults ...; " \
+			"echo fdt ${fdt_filename} ...; " \
 			"run mmcboot; " \
 		"fi\0"
 		
-#define CONFIG_BOOTDELAY	3
+#define CONFIG_BOOTDELAY	1
 #define CONFIG_BOOTCOMMAND	"run mmcbootcmd"
 #define CONFIG_SYS_BOOT_GET_CMDLINE
 #define CONFIG_AUTO_COMPLETE
@@ -481,7 +434,7 @@
 #undef CONFIG_ENV_IS_IN_SUNXI_FLASH
 #define CONFIG_ENV_IS_IN_FAT
 #define FAT_ENV_INTERFACE "mmc"
-#define FAT_ENV_DEVICE_AND_PART "0:1"
+#define FAT_ENV_DEVICE_AND_PART getenv("boot_part")
 #define FAT_ENV_FILE "uboot.env"
 #define CONFIG_SYS_REDUNDAND_ENVIRONMENT
 // #undef CONFIG_MMC_LOGICAL_OFFSET
