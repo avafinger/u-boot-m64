@@ -11,7 +11,7 @@
 #include "debug_mode.h"
 #include "sunxi_string.h"
 #include "sunxi_serial.h"
-#include "pine64_model.h"
+#include "a64_model.h"
 #include <fdt_support.h>
 #include <arisc.h>
 
@@ -232,10 +232,12 @@ int update_bootcmd(void)
 	strcpy(boot_commond, getenv("bootcmd"));
 	printf("base bootcmd=%s\n", boot_commond);
 
-    if (uboot_spare_head.boot_data.storage_type == 1)
+    if (uboot_spare_head.boot_data.storage_type == 1) {
         printf("* storage_type=%s\n", "STORAGE_SD");
-    if (uboot_spare_head.boot_data.storage_type == 2)
+    }
+    if (uboot_spare_head.boot_data.storage_type == 2) {
         printf("* storage_type=%s\n", "STORAGE_EMMC");
+    }
 	
 	if((uboot_spare_head.boot_data.storage_type == 1) || (uboot_spare_head.boot_data.storage_type == 2))
 	{

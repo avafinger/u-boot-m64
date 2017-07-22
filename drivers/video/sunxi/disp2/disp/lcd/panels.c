@@ -9,6 +9,8 @@ extern __lcd_panel_t t27p06_panel;
 extern __lcd_panel_t dx0960be40a1_panel;
 extern __lcd_panel_t tft720x1280_panel;
 extern __lcd_panel_t mb709_mipi_panel;
+extern __lcd_panel_t S070WV20_MIPI_RGB_panel;
+extern __lcd_panel_t LHR050H41_MIPI_RGB_panel;
 
 __lcd_panel_t* panel_array[] = {
 	&default_panel,
@@ -19,6 +21,8 @@ __lcd_panel_t* panel_array[] = {
 	&tft720x1280_panel,
 	/* add new panel below */
 	&mb709_mipi_panel,
+    &S070WV20_MIPI_RGB_panel,
+    &LHR050H41_MIPI_RGB_panel,
 
 	NULL,
 };

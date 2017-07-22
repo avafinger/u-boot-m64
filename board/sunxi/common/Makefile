@@ -33,7 +33,8 @@ obj-y   += check_key_uart.o
 obj-y   += debug_mode.o
 obj-y   += key_burn.o
 obj-$(CONFIG_SUNXI_SERIAL)   += sunxi_serial.o
-obj-$(CONFIG_PINE64_MODEL)   += pine64_model.o
+#obj-$(CONFIG_PINE64_MODEL)   += pine64_model.o
+obj-$(CONFIG_A64_MODEL)   += a64_model.o
 
 obj-$(CONFIG_VIDEO_SUNXI_V1)   += de_v1.o
 obj-$(CONFIG_VIDEO_SUNXI_V2)   += de_v2.o
